@@ -15,14 +15,16 @@ public class NegoStrategy {
     private boolean isPrinting = false; // デバッグ用
     private boolean isPrinting_Strategy = false;
 
+    private NegoHistory negoHistory;
     private double rv = 0.0;                // 留保価格
     private double df = 0.0;                // 割引効用
 
 
-    public NegoStrategy(NegotiationInfo info, boolean isPrinting){
+    public NegoStrategy(NegotiationInfo info, boolean isPrinting, NegoHistory negoHistory){
         this.info = info;
         this.isPrinting = isPrinting;
 
+        this.negoHistory = negoHistory;
         rv = info.getUtilitySpace().getReservationValueUndiscounted();
         df = info.getUtilitySpace().getDiscountFactor();
 

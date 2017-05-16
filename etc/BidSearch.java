@@ -21,13 +21,15 @@ public class BidSearch {
     private boolean isPrinting_Search = true;
 
     private NegoStats negoStats; // 交渉情報
+    private NegoHistory negoHistory;
     private Bid maxBid = null; // 最大効用値Bid
 
-    public BidSearch(NegotiationInfo info, boolean isPrinting, NegoStats negoStats) throws Exception {
+    public BidSearch(NegotiationInfo info, boolean isPrinting, NegoStats negoStats, NegoHistory negoHistory) throws Exception {
         this.info = info;
         this.isPrinting = isPrinting;
 
         this.negoStats = negoStats;
+        this.negoHistory = negoHistory;
 
         initMaxBid(); // 最大効用値Bidの初期探索
         negoStats.setValueRelativeUtility(maxBid); // 相対効用値を導出する

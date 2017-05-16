@@ -21,7 +21,7 @@ import negotiator.parties.NegotiationInfo;
 public class NegoStats {
     private NegotiationInfo info;
     private boolean isPrinting = false; // デバッグ用
-    private boolean isPrinting_Stats = true;
+    private boolean isPrinting_Stats = false;
 
     // 交渉における基本情報
     private List<Issue> issues;

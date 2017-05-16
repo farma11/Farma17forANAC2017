@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import Farma17forANAC2017.etc.BidSearch;
 import list.Tuple;
 
 import negotiator.AgentID;
@@ -23,18 +22,20 @@ import negotiator.persistent.StandardInfoList;
 
 import Farma17forANAC2017.etc.NegoStrategy;
 import Farma17forANAC2017.etc.NegoStats;
+import Farma17forANAC2017.etc.BidSearch;
+import Farma17forANAC2017.etc.NegoHistory;
 
 /**
  * This is your negotiation party.
  */
 public class Farma17 extends AbstractNegotiationParty {
     private NegotiationInfo info;
-    private StandardInfoList history;
     private Bid lastReceivedBid = null;
     private boolean isPrinting = false; // デバッグ用
 
     private NegoStrategy negoStrategy;
     private NegoStats negoStats;
+    private NegoHistory negoHistory;
     private BidSearch bidSearch;
 
 
@@ -42,33 +43,15 @@ public class Farma17 extends AbstractNegotiationParty {
     public void init(NegotiationInfo info) {
         super.init(info);
         this.info = info;
-        negoStrategy    = new NegoStrategy(info, isPrinting);
+        negoHistory     = new NegoHistory(info, isPrinting, getData());
+        negoStrategy    = new NegoStrategy(info, isPrinting, negoHistory);
         negoStats       = new NegoStats(info, isPrinting);
 
             
         try {
-            bidSearch = new BidSearch(info, isPrinting, negoStats);
+            bidSearch = new BidSearch(info, isPrinting, negoStats, negoHistory);
         } catch (Exception e) {
             e.printStackTrace();
-        }
-
-        // PersistentDataType が Standard の場合
-        if (getData().getPersistentDataType() == PersistentDataType.STANDARD) {
-            history = (StandardInfoList) getData().get();
-
-            if (!history.isEmpty()) {
-                // example of using the history. Compute for each party the maximum
-                // utility of the bids in last session.
-                Map<String, Double> maxutils = new HashMap<String, Double>();
-                StandardInfo lastinfo = history.get(history.size() - 1);
-                for (Tuple<String, Double> offered : lastinfo.getUtilities()) {
-                    String party = offered.get1();
-                    Double util = offered.get2();
-                    maxutils.put(party, maxutils.containsKey(party) ? Math.max(maxutils.get(party), util) : util);
-                }
-                System.out.println(maxutils); // notice tournament suppresses all
-                // output.
-            }
         }
 
         if(isPrinting) {
