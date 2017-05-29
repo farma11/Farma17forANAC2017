@@ -13,6 +13,7 @@ import negotiator.actions.Action;
 import negotiator.actions.Accept;
 import negotiator.actions.Offer;
 import negotiator.actions.EndNegotiation;
+import negotiator.actions.Inform;
 import negotiator.parties.AbstractNegotiationParty;
 import negotiator.parties.NegotiationInfo;
 import negotiator.persistent.PersistentDataContainer;
@@ -31,6 +32,7 @@ import Farma17forANAC2017.etc.NegoHistory;
 public class Farma17 extends AbstractNegotiationParty {
     private NegotiationInfo info;
     private Bid lastReceivedBid = null;
+    private Bid previousBid     = null;
     private boolean isPrinting = false; // デバッグ用
 
     private NegoStrategy negoStrategy;
@@ -108,11 +110,24 @@ public class Farma17 extends AbstractNegotiationParty {
         }
 
         if(action != null){
+            if(action instanceof Inform && ((Inform) action).getName() == "NumberOfAgents" && ((Inform) action).getValue() instanceof Integer) {
+                Integer opponentsNum = (Integer) ((Inform) action).getValue();
+                negoStats.updateNegotiatorsNum(opponentsNum);
+                if(isPrinting){ System.out.println("NumberofNegotiator:" + negoStats.getNegotiatorNum());}
+            }
+
             if (action instanceof Offer) {
                 if(!negoStats.getRivals().contains(sender)) {
                     negoStats.initRivals(sender);
                 }
 
+                // RejectしたValueの頻度を更新
+                previousBid = lastReceivedBid;
+                if(previousBid != null){
+                    negoStats.updateRejectedValues(sender, previousBid);
+                }
+
+                // 今回Offerされた lastReceivedBid に関する更新
                 lastReceivedBid = ((Offer) action).getBid();
                 try {
                     negoStats.updateInfo(sender, lastReceivedBid);
@@ -124,6 +139,9 @@ public class Farma17 extends AbstractNegotiationParty {
                 if(!negoStats.getRivals().contains(sender)) {
                     negoStats.initRivals(sender);
                 }
+
+                // AcceptしたものもAgreeとし，AgreeしたValueの頻度を更新
+                negoStats.updateAgreedValues(sender, lastReceivedBid);
             } else if (action instanceof EndNegotiation){
 
             }

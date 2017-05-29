@@ -26,12 +26,16 @@ public class NegoStats {
     // 交渉における基本情報
     private List<Issue> issues;
     private ArrayList<Object> rivals;
+    private int negotiatorNum = 0; // 交渉者数
     private boolean isLinerUtilitySpace = true; // 線形効用空間であるかどうか
     private HashMap<Issue, HashMap<Value, Double>> valueRelativeUtility = null; // 自身の効用空間における各論点値の相対効用値行列（線形効用空間用）
 
     // current session の提案履歴
     private ArrayList<Bid> myBidHist = null;
     private HashMap<Object, ArrayList<Bid>> rivalsBidHist = null;
+    private HashMap<Object, HashMap<Issue, HashMap<Value, Integer>>> agreedValueFrequency   = null;
+    private HashMap<Object, HashMap<Issue, HashMap<Value, Integer>>> rejectedValueFrequency = null;
+
 
     // 交渉相手の統計情報
     private HashMap<Object, Double> rivalsMean      = null;
@@ -50,16 +54,19 @@ public class NegoStats {
         issues = info.getUtilitySpace().getDomain().getIssues();
         rivals = new ArrayList<Object>();
         valueRelativeUtility = new HashMap<Issue, HashMap<Value, Double>> ();
-        try {
-            initValueRelativeUtility();
-        } catch (Exception e) {
-            System.out.println("相対効用行列の初期化に失敗しました");
-            e.printStackTrace();
-        }
 
         // current session の提案履歴
         myBidHist       = new ArrayList<Bid>();
         rivalsBidHist   = new HashMap<Object, ArrayList<Bid>>();
+        agreedValueFrequency   = new HashMap<Object, HashMap<Issue, HashMap<Value, Integer>>> (); // Value毎のAccept数
+        rejectedValueFrequency = new HashMap<Object, HashMap<Issue, HashMap<Value, Integer>>> (); // Value毎のReject数
+
+        try {
+            initValueRelativeUtility();
+        } catch (Exception e) {
+            System.out.println("[Exception_Stats] 相対効用行列の初期化に失敗しました");
+            e.printStackTrace();
+        }
 
         // 交渉相手の統計情報
         rivalsMean      = new HashMap<Object, Double>();
@@ -81,7 +88,7 @@ public class NegoStats {
         try {
             updateNegoStats(sender, offeredBid); // 交渉情報の更新
         } catch (Exception e1) {
-            System.out.println("[Exception] 交渉情報の更新に失敗しました");
+            System.out.println("[Exception_Stats] 交渉情報の更新に失敗しました");
             e1.printStackTrace();
         }
     }
@@ -93,6 +100,14 @@ public class NegoStats {
         rivalsSum.put(sender, 0.0);
         rivalsPowSum.put(sender, 0.0);
         rivalsSD.put(sender, 0.0);
+    }
+
+    /**
+     * 交渉者数を更新する
+     * @param num
+     */
+    public void updateNegotiatorsNum(int num) {
+        negotiatorNum = num;
     }
 
 
@@ -108,12 +123,14 @@ public class NegoStats {
      * @throws Exception
      */
     private void initValueRelativeUtility() throws Exception{
-        ArrayList<Value> values = null;
+        //ArrayList<Value> values = null;
+        ArrayList<Object> rivals = getRivals();
+
         for(Issue issue:issues){
             valueRelativeUtility.put(issue, new HashMap<Value, Double>()); // 論点行の初期化
-            values = getValues(issue);
 
             // 論点行の要素の初期化
+            ArrayList<Value> values = getValues(issue);
             for(Value value:values){
                 valueRelativeUtility.get(issue).put(value, 0.0);
             }
@@ -135,10 +152,78 @@ public class NegoStats {
         }
     }
 
+    /**
+     * Agent senderが受け入れたValueの頻度を更新
+     * @param sender
+     * @param bid
+     */
+    public void updateAgreedValues(Object sender, Bid bid){
+        // senderが過去に登場していない場合は初期化
+        if(!agreedValueFrequency.containsKey(sender)){
+            agreedValueFrequency.put(sender, new HashMap<Issue, HashMap<Value, Integer>> ());
+
+            for(Issue issue : issues){
+                agreedValueFrequency.get(sender).put(issue, new HashMap<Value, Integer>());
+
+                ArrayList<Value> values = getValues(issue);
+                for(Value value : values){
+                    agreedValueFrequency.get(sender).get(issue).put(value, 0);
+                }
+            }
+        }
+
+        // 各issue毎に個数をカウント
+        for(Issue issue : issues) {
+            Value value = bid.getValue(issue.getNumber());
+            agreedValueFrequency.get(sender).get(issue).put(value, agreedValueFrequency.get(sender).get(issue).get(value) + 1);
+        }
+
+        if(isPrinting_Stats){
+            System.out.println("[isPrinting_Stats] " + sender.toString() + ":");
+            for(Issue issue : issues){
+                ArrayList<Value> values = getValues(issue);
+                for(Value value : values){
+                    System.out.print(agreedValueFrequency.get(sender).get(issue).get(value) + " ");
+                }
+                System.out.println();
+            }
+        }
+    }
+
+    /**
+     * senderが拒絶したValueの頻度を更新
+     * @param sender
+     * @param bid
+     */
+    public void updateRejectedValues(Object sender, Bid bid){
+        // senderが過去に登場していない場合は初期化
+        if(!rejectedValueFrequency.containsKey(sender)){
+            rejectedValueFrequency.put(sender, new HashMap<Issue, HashMap<Value, Integer>> ());
+
+            for(Issue issue : issues){
+                rejectedValueFrequency.get(sender).put(issue, new HashMap<Value, Integer>());
+
+                ArrayList<Value> values = getValues(issue);
+                for(Value value : values){
+                    rejectedValueFrequency.get(sender).get(issue).put(value, 0);
+                }
+            }
+        }
+
+        // 各issue毎に個数をカウント
+        for(Issue issue : issues) {
+            Value value = bid.getValue(issue.getNumber());
+            rejectedValueFrequency.get(sender).get(issue).put(value, rejectedValueFrequency.get(sender).get(issue).get(value) + 1);
+        }
+    }
+
 
     public void updateNegoStats(Object sender, Bid offeredBid) throws Exception {
-        rivalsBidHist.get(sender).add(offeredBid); // 提案履歴
+        // current session の提案履歴 への追加
+        rivalsBidHist.get(sender).add(offeredBid);
+        updateAgreedValues(sender, offeredBid);
 
+        // 交渉相手の統計情報 の更新
         double util = info.getUtilitySpace().getUtility(offeredBid);
         rivalsSum.put(sender, rivalsSum.get(sender) + util); // 和
         rivalsPowSum.put(sender, rivalsPowSum.get(sender) + Math.pow(util, 2)); // 二乗和
@@ -185,7 +270,7 @@ public class NegoStats {
      * 交渉者数（自身を含む）を返す
      * @return
      */
-    public int getRivalsSize(){
+    public int getNegotiatorNum(){
         // + 1: 自分
         return rivals.size() + 1;
     }
@@ -241,6 +326,10 @@ public class NegoStats {
     public HashMap<Issue, HashMap<Value, Double>> getValueRelativeUtility(){
         return valueRelativeUtility;
     }
+
+
+    // current session の提案履歴 の取得
+    // TODO: 何を取得する？
 
 
     // 交渉相手の統計情報 の取得
