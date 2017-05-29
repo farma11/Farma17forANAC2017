@@ -1,11 +1,14 @@
 package Farma17forANAC2017.etc;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import negotiator.Bid;
+import negotiator.issue.Issue;
 import negotiator.utility.AbstractUtilitySpace;
 import negotiator.parties.AbstractNegotiationParty;
 import negotiator.parties.NegotiationInfo;
+
 
 /**
  * Created by tatsuya_toyama on 2017/05/07.
@@ -13,17 +16,19 @@ import negotiator.parties.NegotiationInfo;
 public class NegoStrategy {
     private NegotiationInfo info;
     private boolean isPrinting = false; // デバッグ用
-    private boolean isPrinting_Strategy = false;
+    private boolean isPrinting_Strategy = true;
 
+    private NegoStats negoStats; // 交渉情報
     private NegoHistory negoHistory;
     private double rv = 0.0;                // 留保価格
     private double df = 0.0;                // 割引効用
 
 
-    public NegoStrategy(NegotiationInfo info, boolean isPrinting, NegoHistory negoHistory){
+    public NegoStrategy(NegotiationInfo info, boolean isPrinting, NegoStats negoStats, NegoHistory negoHistory){
         this.info = info;
         this.isPrinting = isPrinting;
 
+        this.negoStats = negoStats;
         this.negoHistory = negoHistory;
         rv = info.getUtilitySpace().getReservationValueUndiscounted();
         df = info.getUtilitySpace().getDiscountFactor();
@@ -39,7 +44,7 @@ public class NegoStrategy {
                 return false;
             }
         } catch (Exception e) {
-            System.out.println("[Exception] 受容判定に失敗しました");
+            System.out.println("[Exception_Strategy] 受容判定に失敗しました");
             e.printStackTrace();
             return false;
         }
@@ -50,9 +55,37 @@ public class NegoStrategy {
         return false;
     }
 
+    /**
+     * 統計情報を元に相手の変位幅を推定 (二分割一様分布を利用)
+     * @param m 平均効用値
+     * @param sd 標準偏差
+     * @return
+     */
+    public double calWidth(double m, double sd){
+        if(m > 0.1 && m < 0.9){
+            return Math.sqrt(3.0 / (m - m*m)) * sd;
+        } else {
+            return Math.sqrt(12) * sd;
+        }
+    }
+
     // 閾値を返す
     public double getThreshold(double time) {
-        double threshold = 1.0 - time;
+        double threshold = 1.0;
+        double alpha = 3.5;
+
+        // 交渉相手全員に対してemaxを計算し，最小となるものを探す
+        ArrayList<Object> rivals = negoStats.getRivals();
+        double emax = 1.0;
+        for(Object sender: rivals){
+            double m    = negoStats.getRivalMean(sender);
+            double sd   = negoStats.getRivalSD(sender);
+            emax = Math.min(emax, m + (1 - m)*calWidth(m, sd));
+            emax = Math.max(emax, rv); //　留保価格より小さい場合は，rvを採用する．
+        }
+
+        threshold = Math.min(threshold, 1 - (1 - emax) * Math.pow(time, alpha));
+
         if(isPrinting_Strategy){
             System.out.println("[isPrint_Strategy] threshold = " + threshold + " (time: " + time + ")");
         }

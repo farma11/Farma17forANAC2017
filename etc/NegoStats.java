@@ -73,6 +73,7 @@ public class NegoStats {
 
     public void initRivals(Object sender) {
         initNegotiatingInfo(sender); // 交渉情報を初期化
+        System.out.println("[Rivals]: " + sender.toString());
         rivals.add(sender); // 交渉参加者にsenderを追加
     }
 

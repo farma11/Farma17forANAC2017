@@ -51,7 +51,7 @@ public class BidSearch {
             }
             return bid;
         } catch (Exception e) {
-            System.out.println("Bidの探索に失敗しました");
+            System.out.println("[Exception_Search] Bidの探索に失敗しました");
             e.printStackTrace();
             return baseBid;
         }
@@ -93,8 +93,8 @@ public class BidSearch {
                 }
             }
         } catch (Exception e) {
-            System.out.println("[Exception] SA探索に失敗しました");
-            System.out.println("[Exception] Problem with received bid(SA:last):" + e.getMessage() + ". cancelling bidding");
+            System.out.println("[Exception_Search] SA探索に失敗しました");
+            System.out.println("[Exception_Search] Problem with received bid(SA:last):" + e.getMessage() + ". cancelling bidding");
         }
         return bid;
     }
@@ -109,7 +109,8 @@ public class BidSearch {
         int tryNum = info.getUtilitySpace().getDomain().getIssues().size(); // 試行回数
 
         Random rnd = new Random(info.getRandomSeed()); //Randomクラスのインスタンス化
-        maxBid = info.getUtilitySpace().getDomain().getRandomBid(rnd);
+        //maxBid = info.getUtilitySpace().getDomain().getRandomBid(rnd);
+        maxBid = info.getUtilitySpace().getMaxUtilityBid();
         for (int i = 0; i < tryNum; i++) {
             try {
                 do{
@@ -119,10 +120,12 @@ public class BidSearch {
                     break;
                 }
             } catch (Exception e) {
-                System.out.println("[Exception] 最大効用値Bidの初期探索に失敗しました");
+                System.out.println("[Exception_Search] 最大効用値Bidの初期探索に失敗しました");
                 e.printStackTrace();
             }
         }
+
+        System.out.println("[isPrinting_Search]:" + maxBid.toString() + " " + info.getUtilitySpace().getUtility(maxBid));
     }
 
     /**

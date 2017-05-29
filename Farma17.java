@@ -44,9 +44,8 @@ public class Farma17 extends AbstractNegotiationParty {
         super.init(info);
         this.info = info;
         negoHistory     = new NegoHistory(info, isPrinting, getData());
-        negoStrategy    = new NegoStrategy(info, isPrinting, negoHistory);
         negoStats       = new NegoStats(info, isPrinting);
-
+        negoStrategy    = new NegoStrategy(info, isPrinting, negoStats, negoHistory);
             
         try {
             bidSearch = new BidSearch(info, isPrinting, negoStats, negoHistory);
@@ -84,7 +83,9 @@ public class Farma17 extends AbstractNegotiationParty {
             return new EndNegotiation(getPartyId());
         }
 
-        Bid offerBid = generateRandomBid();
+
+        Bid offerBid = bidSearch.getBid(generateRandomBid(), negoStrategy.getThreshold(time));
+        negoStats.updateMyBidHist(offerBid);
         return new Offer(getPartyId(), offerBid);
     }
 
@@ -132,7 +133,7 @@ public class Farma17 extends AbstractNegotiationParty {
 
     @Override
     public String getDescription() {
-        return "Template Agent";
+        return "Farma17 for ANAC2017";
     }
 
 }
