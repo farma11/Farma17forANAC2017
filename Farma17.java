@@ -34,6 +34,7 @@ public class Farma17 extends AbstractNegotiationParty {
     private Bid lastReceivedBid = null;
     private Bid previousBid     = null;
     private boolean isPrinting = false; // デバッグ用
+    private boolean isPrinting_Main = false;
 
     private NegoStrategy negoStrategy;
     private NegoStats negoStats;
@@ -105,8 +106,8 @@ public class Farma17 extends AbstractNegotiationParty {
     public void receiveMessage(AgentID sender, Action action) {
         super.receiveMessage(sender, action);
 
-        if(isPrinting){
-            System.out.println("[isPrint] Sender:" + sender + ", Action:"+action);
+        if(isPrinting_Main){
+            System.out.println("[isPrinting_Main] Sender:" + sender + ", Action:"+action);
         }
 
         if(action != null){

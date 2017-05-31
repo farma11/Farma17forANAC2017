@@ -34,6 +34,10 @@ public class BidSearch {
         initMaxBid(); // 最大効用値Bidの初期探索
         negoStats.setValueRelativeUtility(maxBid); // 相対効用値を導出する
 
+        if(this.isPrinting){
+            System.out.println("[isPrinting] BidSearch: success");
+        }
+
     }
 
     /**

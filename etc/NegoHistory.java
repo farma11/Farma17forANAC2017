@@ -29,6 +29,7 @@ public class NegoHistory {
     private boolean historyAnalyzed = false;
 
     private boolean isPrinting = false; // デバッグ用
+    private boolean isPrinting_History = false;
 
     /**
      * @param info
@@ -37,6 +38,7 @@ public class NegoHistory {
      */
     public NegoHistory(NegotiationInfo info, boolean isPrinting, PersistentDataContainer pData) {
         this.info = info;
+        this.isPrinting = isPrinting;
 
         // PersistentDataType が Standard の場合
         if (pData.getPersistentDataType() == PersistentDataType.STANDARD) {
@@ -55,6 +57,10 @@ public class NegoHistory {
                 System.out.println(maxutils); // notice tournament suppresses all
                 // output.
             }
+        }
+
+        if(this.isPrinting){
+            System.out.println("[isPrinting] NegoHistory: success");
         }
 
     }

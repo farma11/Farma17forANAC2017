@@ -13,6 +13,7 @@ import negotiator.issue.IssueInteger;
 import negotiator.issue.Value;
 import negotiator.issue.ValueDiscrete;
 
+
 import negotiator.parties.NegotiationInfo;
 
 /**
@@ -21,7 +22,7 @@ import negotiator.parties.NegotiationInfo;
 public class NegoStats {
     private NegotiationInfo info;
     private boolean isPrinting = false; // デバッグ用
-    private boolean isPrinting_Stats = false;
+    private boolean isPrinting_Stats = true;
 
     // 交渉における基本情報
     private List<Issue> issues;
@@ -43,6 +44,9 @@ public class NegoStats {
     private HashMap<Object, Double> rivalsSum       = null;
     private HashMap<Object, Double> rivalsPowSum    = null;
     private HashMap<Object, Double> rivalsSD        = null;
+
+    private HashMap<Object, Double> rivalsMax       = null; // 今sessionにおける相手の提案に対する自身の最大効用値
+    private HashMap<Object, Double> rivalsMin       = null; // 今sessionにおける相手の提案に対する自身の最低効用値
 
 
 
@@ -75,12 +79,17 @@ public class NegoStats {
         rivalsPowSum    = new HashMap<Object, Double>();
         rivalsSD        = new HashMap<Object, Double>();
 
+        rivalsMax       = new HashMap<Object, Double>();
+        rivalsMin       = new HashMap<Object, Double>();
+
+        if(this.isPrinting){
+            System.out.println("[isPrinting] NegoStats: success");
+        }
 
     }
 
     public void initRivals(Object sender) {
         initNegotiatingInfo(sender); // 交渉情報を初期化
-        System.out.println("[Rivals]: " + sender.toString());
         rivals.add(sender); // 交渉参加者にsenderを追加
     }
 
@@ -100,6 +109,9 @@ public class NegoStats {
         rivalsSum.put(sender, 0.0);
         rivalsPowSum.put(sender, 0.0);
         rivalsSD.put(sender, 0.0);
+
+        rivalsMax.put(sender, 0.0);
+        rivalsMin.put(sender, 1.0);
     }
 
     /**
@@ -178,7 +190,7 @@ public class NegoStats {
             agreedValueFrequency.get(sender).get(issue).put(value, agreedValueFrequency.get(sender).get(issue).get(value) + 1);
         }
 
-        if(isPrinting_Stats){
+        if(isPrinting_Stats && false){
             System.out.println("[isPrinting_Stats] " + sender.toString() + ":");
             for(Issue issue : issues){
                 ArrayList<Value> values = getValues(issue);
@@ -234,6 +246,13 @@ public class NegoStats {
 
         if(rivalsVar.get(sender) < 0){rivalsVar.put(sender, 0.0);}
         rivalsSD.put(sender, Math.sqrt(rivalsVar.get(sender))); // 標準偏差
+
+        // 最大最小の更新
+        if(util > rivalsMax.get(sender)){
+            rivalsMax.put(sender, util);
+        } else if (util < rivalsMin.get(sender)){
+            rivalsMin.put(sender, util);
+        }
 
         if(isPrinting_Stats){
             System.out.println("[isPrint_Stats] Mean: " + getRivalMean(sender) + " (Agent: " + sender.toString() + ")");
@@ -358,6 +377,25 @@ public class NegoStats {
      */
     public double getRivalSD(Object sender) {
         return rivalsSD.get(sender);
+    }
+
+
+    /**
+     * エージェントSenderにおける今sessionにおける提案の自身の最大効用値
+     * @param sender
+     * @return
+     */
+    public double getRivalMax(Object sender){
+        return rivalsMax.get(sender);
+    }
+
+    /**
+     * エージェントSenderにおける今sessionにおける提案の自身の最小効用値
+     * @param sender
+     * @return
+     */
+    public double getRivalMin(Object sender){
+        return rivalsMin.get(sender);
     }
 
 

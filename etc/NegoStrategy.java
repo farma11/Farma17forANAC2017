@@ -8,6 +8,7 @@ import negotiator.issue.Issue;
 import negotiator.utility.AbstractUtilitySpace;
 import negotiator.parties.AbstractNegotiationParty;
 import negotiator.parties.NegotiationInfo;
+import negotiator.session.Round;
 
 
 /**
@@ -16,7 +17,7 @@ import negotiator.parties.NegotiationInfo;
 public class NegoStrategy {
     private NegotiationInfo info;
     private boolean isPrinting = false; // デバッグ用
-    private boolean isPrinting_Strategy = false;
+    private boolean isPrinting_Strategy = true;
 
     private NegoStats negoStats; // 交渉情報
     private NegoHistory negoHistory;
@@ -33,6 +34,13 @@ public class NegoStrategy {
         rv = info.getUtilitySpace().getReservationValueUndiscounted();
         df = info.getUtilitySpace().getDiscountFactor();
 
+        if(this.isPrinting){
+            System.out.println("[isPrinting] NegoStrategy: success");
+        }
+        if(isPrinting_Strategy){
+            System.out.println("[isPrint_Strategy] rv = " + rv);
+            System.out.println("[isPrint_Strategy] df = " + df);
+        }
     }
 
     // 受容判定
@@ -72,7 +80,7 @@ public class NegoStrategy {
     // 閾値を返す
     public double getThreshold(double time) {
         double threshold = 1.0;
-        double alpha = 3.5;
+        double alpha = 3.0;
 
         // 交渉相手全員に対してemaxを計算し，最小となるものを探す
         ArrayList<Object> rivals = negoStats.getRivals();
@@ -80,15 +88,24 @@ public class NegoStrategy {
         for(Object sender: rivals){
             double m    = negoStats.getRivalMean(sender);
             double sd   = negoStats.getRivalSD(sender);
+
             emax = Math.min(emax, m + (1 - m)*calWidth(m, sd));
+            // negoStats.getRivalMax(sender) より今sessionにおける最大効用値を採用
+            //emax = Math.min(emax, Math.max(negoStats.getRivalMax(sender), m + (1 - m)*calWidth(m, sd)));
             emax = Math.max(emax, rv); //　留保価格より小さい場合は，rvを採用する．
         }
 
-        threshold = Math.min(threshold, 1 - (1 - emax) * Math.pow(time, alpha));
+        // 割引効用が設定されているかどうか (ANAC 2017では設定されない方針)
+        if(1.0 - df < 1e-7){
+            threshold = Math.min(threshold, 1 - (1 - emax) * Math.pow(time, alpha));
+        } else {
+            threshold = Math.min(threshold - time, emax);
+        }
 
         if(isPrinting_Strategy){
-            System.out.println("[isPrint_Strategy] threshold = " + threshold + " (time: " + time + ")");
+            System.out.println("[isPrint_Strategy] threshold = " + threshold + " | time: " + time);
         }
+
         return threshold;
     }
 }
