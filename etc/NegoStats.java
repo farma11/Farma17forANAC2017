@@ -388,6 +388,26 @@ public class NegoStats {
     }
 
     /**
+     * エージェントsenderの論点issueにおける選択肢valueのAgree率を返す
+     * @param sender
+     * @param issue
+     * @param value
+     * @return
+     */
+    public double getProbAgreedValue (Object sender, Issue issue, Value value){
+        ArrayList<Value> values = getValues(issue);
+
+        int sum = 0;
+        for(Value v : values){
+            sum += agreedValueFrequency.get(sender).get(issue).get(v);
+        }
+
+        double prob = agreedValueFrequency.get(sender).get(issue).get(value) * 1.0 / sum;
+        return prob;
+    }
+
+
+    /**
      * エージェントSenderにおける各論点における最大Agree数となる選択肢valueをArrayListで取得
      * @param sender
      * @return
@@ -405,7 +425,8 @@ public class NegoStats {
             System.out.print("[isPrint_Stats] ");
             for(int i = 0; i < issues.size(); i++){
                 //System.out.print(issues.get(i).toString() + ":" + values.get(issues.get(i).getNumber()-1) + " ");
-                System.out.print(issues.get(i).toString() + ":" + values.get(i) + " ");
+                System.out.print(issues.get(i).toString() + ":"
+                        + values.get(i) + "(" + getProbAgreedValue(sender,issues.get(i),values.get(i)) + ") ");
             }
             System.out.println();
         }
@@ -438,6 +459,25 @@ public class NegoStats {
     }
 
     /**
+     * エージェントsenderの論点issueにおける選択肢valueのReject率を返す
+     * @param sender
+     * @param issue
+     * @param value
+     * @return
+     */
+    public double getProbRejectedValue (Object sender, Issue issue, Value value){
+        ArrayList<Value> values = getValues(issue);
+
+        int sum = 0;
+        for(Value v : values){
+            sum += rejectedValueFrequency.get(sender).get(issue).get(v);
+        }
+
+        double prob = rejectedValueFrequency.get(sender).get(issue).get(value) * 1.0 / sum;
+        return prob;
+    }
+
+    /**
      * エージェントSenderにおける各論点における最大Reject数となる選択肢valueをArrayListで取得
      * @param sender
      * @return
@@ -455,7 +495,8 @@ public class NegoStats {
             System.out.print("[isPrint_Stats] ");
             for(int i = 0; i < issues.size(); i++){
                 //System.out.print(issues.get(i).toString() + ":" + values.get(issues.get(i).getNumber()-1) + " ");
-                System.out.print(issues.get(i).toString() + ":" + values.get(i) + " ");
+                System.out.print(issues.get(i).toString() + ":"
+                        + values.get(i) + "(" + getProbRejectedValue(sender,issues.get(i),values.get(i)) + ") ");
             }
             System.out.println();
         }
