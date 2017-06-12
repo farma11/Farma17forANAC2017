@@ -190,8 +190,8 @@ public class NegoStats {
             agreedValueFrequency.get(sender).get(issue).put(value, agreedValueFrequency.get(sender).get(issue).get(value) + 1);
         }
 
-        if(isPrinting_Stats && false){
-            System.out.println("[isPrinting_Stats] " + sender.toString() + ":");
+        if(isPrinting_Stats){
+            System.out.println("[isPrint_Stats] (ACCEPT) " + sender.toString() + ":");
             for(Issue issue : issues){
                 ArrayList<Value> values = getValues(issue);
                 for(Value value : values){
@@ -199,6 +199,8 @@ public class NegoStats {
                 }
                 System.out.println();
             }
+
+            getMostAgreedValues(sender);
         }
     }
 
@@ -226,6 +228,19 @@ public class NegoStats {
         for(Issue issue : issues) {
             Value value = bid.getValue(issue.getNumber());
             rejectedValueFrequency.get(sender).get(issue).put(value, rejectedValueFrequency.get(sender).get(issue).get(value) + 1);
+        }
+
+        if(isPrinting_Stats){
+            System.out.println("[isPrint_Stats] (REJECT) " + sender.toString() + ":");
+            for(Issue issue : issues){
+                ArrayList<Value> values = getValues(issue);
+                for(Value value : values){
+                    System.out.print(rejectedValueFrequency.get(sender).get(issue).get(value) + " ");
+                }
+                System.out.println();
+            }
+
+            getMostRejectedValues(sender);
         }
     }
 
@@ -348,7 +363,105 @@ public class NegoStats {
 
 
     // current session の提案履歴 の取得
-    // TODO: 何を取得する？
+
+    /**
+     * エージェントsenderの論点issueにおける最大Agree数となる選択肢valueを取得
+     * @param sender
+     * @param issue
+     * @return
+     */
+    public Value getMostAgreedValue (Object sender, Issue issue){
+        ArrayList<Value> values = getValues(issue);
+
+        int maxN = 0;
+        Value mostAgreedValue = values.get(0);
+        for (Value value : values){
+            int tempN = agreedValueFrequency.get(sender).get(issue).get(value);
+            // もし最大数が更新されたら
+            if(maxN < tempN){
+                maxN = tempN;
+                mostAgreedValue = value;
+            }
+        }
+
+        return mostAgreedValue;
+    }
+
+    /**
+     * エージェントSenderにおける各論点における最大Agree数となる選択肢valueをArrayListで取得
+     * @param sender
+     * @return
+     */
+    public ArrayList<Value> getMostAgreedValues (Object sender){
+        ArrayList<Value> values = new ArrayList<Value>();
+
+        // issueの内部的な順番はa-b-c-d-...じゃないので注意
+        for (Issue issue : issues){
+            values.add(getMostAgreedValue(sender, issue));
+        }
+
+
+        if(isPrinting_Stats){
+            System.out.print("[isPrint_Stats] ");
+            for(int i = 0; i < issues.size(); i++){
+                //System.out.print(issues.get(i).toString() + ":" + values.get(issues.get(i).getNumber()-1) + " ");
+                System.out.print(issues.get(i).toString() + ":" + values.get(i) + " ");
+            }
+            System.out.println();
+        }
+
+        return values;
+    }
+
+
+    /**
+     * エージェントsenderの論点issueにおける最大Reject数となる選択肢valueを取得
+     * @param sender
+     * @param issue
+     * @return
+     */
+    public Value getMostRejectedValue (Object sender, Issue issue){
+        ArrayList<Value> values = getValues(issue);
+
+        int maxN = 0;
+        Value mostRejectedValue = values.get(0);
+        for (Value value : values){
+            int tempN = rejectedValueFrequency.get(sender).get(issue).get(value);
+            // もし最大数が更新されたら
+            if(maxN < tempN){
+                maxN = tempN;
+                mostRejectedValue = value;
+            }
+        }
+
+        return mostRejectedValue;
+    }
+
+    /**
+     * エージェントSenderにおける各論点における最大Reject数となる選択肢valueをArrayListで取得
+     * @param sender
+     * @return
+     */
+    public ArrayList<Value> getMostRejectedValues (Object sender){
+        ArrayList<Value> values = new ArrayList<Value>();
+
+        // issueの内部的な順番はa-b-c-d-...じゃないので注意
+        for (Issue issue : issues){
+            values.add(getMostRejectedValue(sender, issue));
+        }
+
+
+        if(isPrinting_Stats){
+            System.out.print("[isPrint_Stats] ");
+            for(int i = 0; i < issues.size(); i++){
+                //System.out.print(issues.get(i).toString() + ":" + values.get(issues.get(i).getNumber()-1) + " ");
+                System.out.print(issues.get(i).toString() + ":" + values.get(i) + " ");
+            }
+            System.out.println();
+        }
+
+        return values;
+    }
 
 
     // 交渉相手の統計情報 の取得

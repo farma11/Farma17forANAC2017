@@ -60,7 +60,17 @@ public class NegoStrategy {
 
     // 交渉終了判定
     public boolean selectEndNegotiation(double time) {
-        return false;
+        // 割引効用が設定されているかどうか (ANAC 2017では設定されない方針)
+        if(1.0 - df < 1e-7){
+            return false;
+        } else {
+            if (rv > getThreshold(time)){
+                return true;
+            } else {
+                return false;
+            }
+        }
+
     }
 
     /**
@@ -91,7 +101,7 @@ public class NegoStrategy {
 
             emax = Math.min(emax, m + (1 - m)*calWidth(m, sd));
             // negoStats.getRivalMax(sender) より今sessionにおける最大効用値を採用
-            //emax = Math.min(emax, Math.max(negoStats.getRivalMax(sender), m + (1 - m)*calWidth(m, sd)));
+            // emax = Math.min(emax, Math.max(negoStats.getRivalMax(sender), m + (1 - m)*calWidth(m, sd)));
             emax = Math.max(emax, rv); //　留保価格より小さい場合は，rvを採用する．
         }
 
