@@ -99,9 +99,9 @@ public class NegoStrategy {
             double m    = negoStats.getRivalMean(sender);
             double sd   = negoStats.getRivalSD(sender);
 
-            emax = Math.min(emax, m + (1 - m)*calWidth(m, sd));
+            // emax = Math.min(emax, m + (1 - m)*calWidth(m, sd));
             // negoStats.getRivalMax(sender) より今sessionにおける最大効用値を採用
-            // emax = Math.min(emax, Math.max(negoStats.getRivalMax(sender), m + (1 - m)*calWidth(m, sd)));
+            emax = Math.min(emax, Math.max(negoStats.getRivalMax(sender), m + (1 - m)*calWidth(m, sd)));
             emax = Math.max(emax, rv); //　留保価格より小さい場合は，rvを採用する．
         }
 
@@ -109,11 +109,21 @@ public class NegoStrategy {
         if(1.0 - df < 1e-7){
             threshold = Math.min(threshold, 1 - (1 - emax) * Math.pow(time, alpha));
         } else {
-            threshold = Math.min(threshold - time, emax);
+            threshold = Math.max(threshold - time, emax);
+        }
+
+        // 交渉決裂寸前では、過去の提案で最大のものまで譲歩する
+        if(time > 0.99){
+            for(Object sender: rivals) {
+                threshold = Math.min(threshold, negoStats.getRivalMax(sender));
+            }
+            threshold = Math.max(threshold, rv);
         }
 
         if(isPrinting_Strategy){
-            System.out.println("[isPrint_Strategy] threshold = " + threshold + " | time: " + time);
+            System.out.println("[isPrint_Strategy] threshold = " + threshold
+                    + " | time: " + time
+                    + ", emax: " + emax);
         }
 
         return threshold;

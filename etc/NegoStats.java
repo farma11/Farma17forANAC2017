@@ -22,7 +22,7 @@ import negotiator.parties.NegotiationInfo;
 public class NegoStats {
     private NegotiationInfo info;
     private boolean isPrinting = false; // デバッグ用
-    private boolean isPrinting_Stats = true;
+    private boolean isPrinting_Stats = false;
 
     // 交渉における基本情報
     private List<Issue> issues;
@@ -408,6 +408,39 @@ public class NegoStats {
 
 
     /**
+     * エージェントSenderにおける各論点における累積確率(CP)を取得
+     * @param sender
+     * @param issue
+     * @return
+     */
+    public HashMap<Value, ArrayList<Double>> getCPAgreedValue (Object sender, Issue issue){
+        HashMap<Value, ArrayList<Double>> CPMap = new HashMap<Value, ArrayList<Double>>();
+
+        ArrayList<Value> values = getValues(issue);
+        int sum = 0;
+        for(Value value : values){
+            sum += agreedValueFrequency.get(sender).get(issue).get(value);
+        }
+
+        double tempCP = 0.0;
+        for(Value value : values){
+            ArrayList<Double> tempArray = new ArrayList<Double> ();
+            // 範囲のStartを格納
+            tempArray.add(tempCP);
+
+            // 範囲のEndを格納
+            tempCP += agreedValueFrequency.get(sender).get(issue).get(value) * 1.0 / sum;
+            tempArray.add(tempCP);
+
+            CPMap.put(value, tempArray);
+        }
+
+        return CPMap;
+    }
+
+
+
+    /**
      * エージェントSenderにおける各論点における最大Agree数となる選択肢valueをArrayListで取得
      * @param sender
      * @return
@@ -425,8 +458,12 @@ public class NegoStats {
             System.out.print("[isPrint_Stats] ");
             for(int i = 0; i < issues.size(); i++){
                 //System.out.print(issues.get(i).toString() + ":" + values.get(issues.get(i).getNumber()-1) + " ");
+                //System.out.print(issues.get(i).toString() + ":" + values.get(i) + "(" + getProbAgreedValue(sender,issues.get(i),values.get(i)) + ") ");
+
+                HashMap<Value, ArrayList<Double>> cp = getCPAgreedValue(sender, issues.get(i));
+
                 System.out.print(issues.get(i).toString() + ":"
-                        + values.get(i) + "(" + getProbAgreedValue(sender,issues.get(i),values.get(i)) + ") ");
+                        + values.get(i) + "(" + cp.get(values.get(i)).get(0) + " - " + cp.get(values.get(i)).get(1)  + ") ");
             }
             System.out.println();
         }
@@ -478,6 +515,37 @@ public class NegoStats {
     }
 
     /**
+     * エージェントSenderにおける各論点における累積確率(CP)を取得
+     * @param sender
+     * @param issue
+     * @return
+     */
+    public HashMap<Value, ArrayList<Double>> getCPRejectedValue (Object sender, Issue issue){
+        HashMap<Value, ArrayList<Double>> CPMap = new HashMap<Value, ArrayList<Double>>();
+
+        ArrayList<Value> values = getValues(issue);
+        int sum = 0;
+        for(Value value : values){
+            sum += rejectedValueFrequency.get(sender).get(issue).get(value);
+        }
+
+        double tempCP = 0.0;
+        for(Value value : values){
+            ArrayList<Double> tempArray = new ArrayList<Double> ();
+            // 範囲のStartを格納
+            tempArray.add(tempCP);
+
+            // 範囲のEndを格納
+            tempCP += rejectedValueFrequency.get(sender).get(issue).get(value) * 1.0 / sum;
+            tempArray.add(tempCP);
+
+            CPMap.put(value, tempArray);
+        }
+
+        return CPMap;
+    }
+
+    /**
      * エージェントSenderにおける各論点における最大Reject数となる選択肢valueをArrayListで取得
      * @param sender
      * @return
@@ -495,8 +563,12 @@ public class NegoStats {
             System.out.print("[isPrint_Stats] ");
             for(int i = 0; i < issues.size(); i++){
                 //System.out.print(issues.get(i).toString() + ":" + values.get(issues.get(i).getNumber()-1) + " ");
+                //System.out.print(issues.get(i).toString() + ":" + values.get(i) + "(" + getProbRejectedValue(sender,issues.get(i),values.get(i)) + ") ");
+
+                HashMap<Value, ArrayList<Double>> cp = getCPRejectedValue(sender, issues.get(i));
+
                 System.out.print(issues.get(i).toString() + ":"
-                        + values.get(i) + "(" + getProbRejectedValue(sender,issues.get(i),values.get(i)) + ") ");
+                        + values.get(i) + "(" + cp.get(values.get(i)).get(0) + " - " + cp.get(values.get(i)).get(1)  + ") ");
             }
             System.out.println();
         }

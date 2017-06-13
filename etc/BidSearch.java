@@ -49,11 +49,31 @@ public class BidSearch {
     public Bid getBid(Bid baseBid, double threshold) {
         try {
             Bid bid = getBidbyAppropriateSearch(baseBid, threshold); // 閾値以上の効用値を持つ合意案候補を探索
+
             // 探索によって得られたBidがthresholdよりも小さい場合，最大効用値Bidを基準とする
             if (info.getUtilitySpace().getUtility(bid) < threshold) {
                 bid = new Bid(maxBid);
             }
-            return bid;
+
+            ArrayList<Object> rivals = negoStats.getRivals();
+            Bid tempBid = new Bid(bid);
+            for(int i = 0; i < 100; i++) {
+                for (Object rival : rivals) {
+                    tempBid = getReplacedBidByAR(rival, tempBid);
+                }
+
+                if (info.getUtilitySpace().getUtility(bid) >= threshold) {
+                    break;
+                }
+            }
+
+            // 探索によって得られたBidがthresholdよりも小さい場合
+            if (info.getUtilitySpace().getUtility(tempBid) < threshold) {
+                return bid;
+            } else {
+                return tempBid;
+            }
+
         } catch (Exception e) {
             System.out.println("[Exception_Search] Bidの探索に失敗しました");
             e.printStackTrace();
@@ -249,7 +269,41 @@ public class BidSearch {
         }
     }
 
+    /**
+     * AR (Agree / Reject)
+     * @param sender
+     * @param bid
+     * @return
+     */
+    Bid getReplacedBidByAR(Object sender, Bid bid){
+        Random rnd = new Random(info.getRandomSeed()); //Randomクラスのインスタンス化
 
+        List<Issue> issues = negoStats.getIssues();
+        for(Issue issue : issues) {
+            double r = Math.random();
+            HashMap<Value, ArrayList<Double>> cpr = negoStats.getCPRejectedValue(sender, issue);
+
+            // もし累積Reject率における範囲に入った場合は置換
+            if(cpr.get(bid.getValue(issue.getNumber())).get(0) < r
+                    && cpr.get(bid.getValue(issue.getNumber())).get(1) >= r){
+
+                double a = Math.random();
+                HashMap<Value, ArrayList<Double>> cpa = negoStats.getCPAgreedValue(sender, issue);
+
+                // 各valueについて置換先を確率的に決める
+                ArrayList<Value> values = negoStats.getValues(issue);
+                for(Value value : values){
+                    if (cpa.get(value).get(0) < a && cpa.get(value).get(1) >= a){
+                        bid = bid.putValue(issue.getNumber(), value);
+                    }
+                    break; // １つのvalueに何回も置換しない
+                }
+
+            }
+        }
+
+        return bid;
+    }
 
 
 }
